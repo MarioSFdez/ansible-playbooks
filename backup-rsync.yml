@@ -1,0 +1,19 @@
+---
+- name: Copia de seguridad de archivos con rsync
+  hosts: all
+  become: yes
+  tasks:
+    - name: Crear directorio de copia de seguridad si no existe
+      ansible.builtin.file:
+        path: "/backup_directory"
+        state: directory
+
+    - name: Sincronizar el directorio /home/frodo con /backup_directory
+      ansible.builtin.command:
+        cmd: rsync -avz /home/frodo/ /backup_directory/
+      register: rsync_result
+
+    - name: Mostrar resultados del rsync
+      ansible.builtin.debug:
+        msg: "{{ rsync_result.stdout_lines }}"
+
