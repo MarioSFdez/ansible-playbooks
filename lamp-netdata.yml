@@ -1,0 +1,59 @@
+---
+- name: Instalar LAMP y Netdata en servidores
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Actualizar caché de paquetes
+      apt:
+        update_cache: yes
+
+    - name: Instalar paquetes de Apache y PHP
+      apt:
+        name: ['apache2', 'php', 'libapache2-mod-php']
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Reiniciar servicio de Apache
+      service:
+        name: apache2
+        state: restarted
+      when: ansible_os_family == 'Debian'
+
+    - name: Instalar paquetes de MariaDB
+      apt:
+        name: ['mariadb-server', 'python3-pymysql']
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Reiniciar servicio de MariaDB
+      service:
+        name: mariadb
+        state: restarted
+      when: ansible_os_family == 'Debian'
+
+    - name: Crear base de datos y usuario en MariaDB
+      mysql_user:
+        name: frodo
+        password: bolson
+        login_user: root
+        login_password: bolson
+        priv: '*.*:ALL'
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Descargar e instalar el script de instalación de Netdata
+      get_url:
+        url: https://my-netdata.io/kickstart.sh
+        dest: /tmp/netdata-install.sh
+        mode: 0755
+
+    - name: Ejecutar el script de instalación de Netdata
+      command: /tmp/netdata-install.sh --dont-wait
+
+    - name: Habilitar Netdata al inicio
+      service:
+        name: netdata
+        state: started
+        enabled: yes
+    
