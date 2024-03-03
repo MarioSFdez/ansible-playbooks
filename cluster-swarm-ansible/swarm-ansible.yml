@@ -19,19 +19,23 @@
       apt_key:
         url: https://download.docker.com/linux/debian/gpg
         state: present
+      register: docker_gpg_key
 
     - name: Get the distribution codename
       shell: lsb_release -cs
       register: dist_codename
+      changed_when: false
 
     - name: Set up the stable repository for Debian
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
         state: present
+      when: docker_gpg_key is changed
 
     - name: Install Docker Engine
       apt:
         name: docker-ce
+        update_cache: yes
         state: latest
 
 - name: Initialize Docker Swarm Manager
